@@ -11,6 +11,7 @@ Automatic travel blog generator for Giovanni's journey through small towns of Ea
 - 🏨 **Real Accommodations**: Finds actual places to stay using Google Places API
 - 🍽️ **Local Cuisine**: Discovers authentic restaurants and local dishes
 - 🎯 **Attractions**: Locates historical sites, museums, and points of interest
+- 🔗 **Smart Links**: Automatically includes links to restaurants and attractions using Google Places API
 - 📸 **Photography**: Automatically adds relevant travel images from Unsplash or generates custom images with Freepik AI
 - 🌤️ **Weather Integration**: Includes real weather data in posts
 - 📝 **AI Content**: Generates engaging, personal travel stories using OpenAI

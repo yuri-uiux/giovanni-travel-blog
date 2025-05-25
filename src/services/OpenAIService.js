@@ -108,10 +108,36 @@ class OpenAIService {
   async generateBlogPostSections(data, options = {}) {
     const results = {};
     
+    // Get website links for restaurant and attraction
+    let restaurantWebsite = null;
+    let attractionWebsite = null;
+    
+    try {
+      console.log(`Finding website for restaurant: ${data.restaurant.name}`);
+      restaurantWebsite = await WebsiteFinderService.findWebsite(
+        data.restaurant.name, 
+        `${data.location.name}, ${data.location.country}`, 
+        'restaurant'
+      );
+    } catch (error) {
+      console.warn(`Could not find restaurant website: ${error.message}`);
+    }
+    
+    try {
+      console.log(`Finding website for attraction: ${data.attraction.name}`);
+      attractionWebsite = await WebsiteFinderService.findWebsite(
+        data.attraction.name, 
+        `${data.location.name}, ${data.location.country}`, 
+        'attraction'
+      );
+    } catch (error) {
+      console.warn(`Could not find attraction website: ${error.message}`);
+    }
+    
     // Section 1: Introduction
     const introPrompt = `
 Write an introduction paragraph for Giovanni's travel blog from ${data.location.name}, ${data.location.country}.
-Day ${data.current_day} of his stay.
+Day ${data.location.current_day} of his stay.
 The weather is ${data.weather.description} at ${data.weather.temperature}°C.
 Use a first-person perspective, include some sensory details, and one phrase in the local language.
 Keep it under 150 words.
@@ -119,7 +145,7 @@ Keep it under 150 words.
 
     // Section 2: Accommodation (only for first day at location)
     let accommodationPrompt = '';
-    if (data.current_day <= 1 && data.accommodation) {
+    if (data.location.current_day <= 1 && data.accommodation) {
       accommodationPrompt = `
 Write a vivid and detailed description of Giovanni's new accommodation in ${data.location.name}.
 Name: ${data.accommodation.name}
@@ -191,6 +217,10 @@ Keep the total under 200 words.
       results.closing = await this.generateText(closingPrompt, options);
       console.log('Closing sections generated');
       
+      // Add website links to results for later use
+      results.restaurantWebsite = restaurantWebsite;
+      results.attractionWebsite = attractionWebsite;
+      
       return results;
     } catch (error) {
       console.error('Error generating blog post sections:', error.message);
@@ -253,6 +283,10 @@ Keep the total under 200 words.
 <!-- wp:paragraph -->
 <p>${sections.food}</p>
 <!-- /wp:paragraph -->
+${sections.restaurantWebsite && sections.restaurantWebsite.url ? `
+<!-- wp:paragraph -->
+<p>📍 <a href="${sections.restaurantWebsite.url}" target="_blank" rel="noopener">${data.restaurant.name}</a> ${sections.restaurantWebsite.isOpen === false ? '(Note: May be temporarily closed)' : ''}</p>
+<!-- /wp:paragraph -->` : ''}
 `;
 
     // Add attraction section
@@ -266,6 +300,10 @@ Keep the total under 200 words.
 <!-- wp:paragraph -->
 <p>${sections.attraction}</p>
 <!-- /wp:paragraph -->
+${sections.attractionWebsite && sections.attractionWebsite.url ? `
+<!-- wp:paragraph -->
+<p>📍 <a href="${sections.attractionWebsite.url}" target="_blank" rel="noopener">${data.attraction.name}</a> ${sections.attractionWebsite.isOpen === false ? '(Note: May be temporarily closed)' : ''}</p>
+<!-- /wp:paragraph -->` : ''}
 `;
 
     // Split closing section into plans and tips
@@ -306,7 +344,7 @@ Keep the total under 200 words.
 `;
 
     // Create excerpt
-    const excerpt = `Join Giovanni on day ${data.current_day} of his journey through ${data.location.name}, ${data.location.country}, as he explores the city, enjoys local cuisine at ${data.restaurant.name}, and visits ${data.attraction.name}.`;
+    const excerpt = `Join Giovanni on day ${data.location.current_day} of his journey through ${data.location.name}, ${data.location.country}, as he explores the city, enjoys local cuisine at ${data.restaurant.name}, and visits ${data.attraction.name}.`;
 
     return {
       title,
