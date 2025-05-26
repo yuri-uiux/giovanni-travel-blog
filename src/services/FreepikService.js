@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3').verbose();
+const CitySpecialtyService = require('./CitySpecialtyService');
 require('dotenv').config();
 
 class FreepikService {
@@ -30,6 +31,8 @@ class FreepikService {
     this.defaultResolution = process.env.FREEPIK_IMAGE_RESOLUTION || '1k'; // 1k, 2k, 4k
     this.defaultEngine = process.env.FREEPIK_ENGINE || 'magnific_sharpy'; // magnific_sharpy, kandinsky, stable_diffusion
     this.defaultStyle = process.env.FREEPIK_IMAGE_STYLE || null; // Valid styles: anime, cartoon, painting, sketch, watercolor (or null for no style)
+    this.defaultRealism = process.env.FREEPIK_REALISM === 'true' ? true : (process.env.FREEPIK_REALISM === 'false' ? false : null); // true/false: Extra boost of reality
+    this.defaultCreativeDetailing = parseInt(process.env.FREEPIK_CREATIVE_DETAILING) || null; // 0-100: Level of creative detailing
   }
 
   // Get database connection
@@ -53,21 +56,55 @@ class FreepikService {
   }
 
   // Generate diverse location prompts for AI image generation
-  generateLocationPrompt(name, country) {
-    const locationPrompts = [
-      'charming old town street with historic buildings',
-      'quaint village square in evening light',
-      'traditional architecture with vintage charm',
-      'peaceful town center with cobblestone streets',
-      'old European town atmosphere',
-      'historic district with traditional buildings'
-    ];
-    
-    // Select random prompt variant
-    const selectedPrompt = locationPrompts[Math.floor(Math.random() * locationPrompts.length)];
-    
-    // Build prompt with location context and season
-    return `${selectedPrompt} in ${name}, ${country}, ${this.currentSeason} atmosphere, professional travel photography style`;
+  async generateLocationPrompt(name, country, yesterdayWeather = null) {
+    try {
+      // Try to get city specialty information
+      const citySpecialty = await CitySpecialtyService.getCitySpecialty(name, country);
+      
+      // If we have specialty information, use enhanced prompt
+      if (citySpecialty && citySpecialty.specialty !== 'historic architecture') {
+        const enhancedPrompt = CitySpecialtyService.getEnhancedLocationPrompt(
+          name, 
+          country, 
+          citySpecialty, 
+          this.currentSeason, 
+          yesterdayWeather
+        );
+        
+        if (enhancedPrompt) {
+          console.log(`Using enhanced prompt for ${name}: ${citySpecialty.specialty}`);
+          return enhancedPrompt;
+        }
+      }
+      
+      // Fallback to generic prompts if no specialty or enhanced prompt fails
+      const locationPrompts = [
+        'charming old town street with historic buildings',
+        'quaint village square in evening light',
+        'traditional architecture with vintage charm',
+        'peaceful town center with cobblestone streets',
+        'old European town atmosphere',
+        'historic district with traditional buildings'
+      ];
+      
+      // Select random prompt variant
+      const selectedPrompt = locationPrompts[Math.floor(Math.random() * locationPrompts.length)];
+      
+      // Build weather description for prompt
+      let weatherDescription = '';
+      if (yesterdayWeather && yesterdayWeather.description) {
+        weatherDescription = `, ${yesterdayWeather.description} weather`;
+      }
+      
+      // Build prompt with location context, season, and weather
+      return `${selectedPrompt} in ${name}, ${country}, ${this.currentSeason}${weatherDescription} atmosphere, professional travel photography style`;
+      
+    } catch (error) {
+      console.error(`Error generating location prompt: ${error.message}`);
+      
+      // Fallback to basic prompt
+      return `historic town center in ${name}, ${country}, ${this.currentSeason} atmosphere, professional travel photography style`;
+    }
   }
 
   // Generate diverse accommodation prompts
@@ -182,6 +219,21 @@ class FreepikService {
         };
       }
       
+      // Add realism and creative_detailing if configured
+      if (this.defaultRealism !== null || this.defaultCreativeDetailing !== null) {
+        if (!requestBody.styling) {
+          requestBody.styling = {};
+        }
+        
+        if (this.defaultRealism !== null) {
+          requestBody.styling.realism = this.defaultRealism; // Boolean value (true/false)
+        }
+        
+        if (this.defaultCreativeDetailing !== null) {
+          requestBody.styling.creative_detailing = Math.max(0, Math.min(100, this.defaultCreativeDetailing)); // Ensure 0-100 range
+        }
+      }
+      
       const response = await axios.post(`${this.baseURL}/ai/text-to-image`, requestBody, {
         headers: {
           'Content-Type': 'application/json',
@@ -234,6 +286,19 @@ class FreepikService {
               filter_nsfw: true,
               response_format: 'b64_json'
             };
+            
+            // Add realism and creative_detailing to retry request if configured
+            if (this.defaultRealism !== null || this.defaultCreativeDetailing !== null) {
+              retryRequestBody.styling = {};
+              
+              if (this.defaultRealism !== null) {
+                retryRequestBody.styling.realism = this.defaultRealism;
+              }
+              
+              if (this.defaultCreativeDetailing !== null) {
+                retryRequestBody.styling.creative_detailing = Math.max(0, Math.min(100, this.defaultCreativeDetailing));
+              }
+            }
             
             const retryResponse = await axios.post(`${this.baseURL}/ai/text-to-image`, retryRequestBody, {
               headers: {
@@ -319,7 +384,7 @@ class FreepikService {
   }
 
   // Get location image (main method for location images)
-  async getLocationImage(location, filename) {
+  async getLocationImage(location, filename, yesterdayWeather = null) {
     try {
       // Ensure filename has .jpg extension
       if (!filename.toLowerCase().endsWith('.jpg') && !filename.toLowerCase().endsWith('.jpeg')) {
@@ -327,7 +392,7 @@ class FreepikService {
         filename = `${nameWithoutExt}.jpg`;
       }
       
-      const prompt = this.generateLocationPrompt(location.name, location.country);
+      const prompt = await this.generateLocationPrompt(location.name, location.country, yesterdayWeather);
       const imageInfo = await this.generateImage(prompt, 'location');
       
       if (imageInfo && imageInfo.base64) {

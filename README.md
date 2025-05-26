@@ -12,8 +12,9 @@ Automatic travel blog generator for Giovanni's journey through small towns of Ea
 - 🍽️ **Local Cuisine**: Discovers authentic restaurants and local dishes
 - 🎯 **Attractions**: Locates historical sites, museums, and points of interest
 - 🔗 **Smart Links**: Automatically includes links to restaurants and attractions using Google Places API
-- 📸 **Photography**: Automatically adds relevant travel images from Unsplash or generates custom images with Freepik AI
-- 🌤️ **Weather Integration**: Includes real weather data in posts
+- 🌤️ **Weather Context**: Uses yesterday's weather data for realistic image generation
+- 🏛️ **City Specialties**: Recognizes unique city characteristics (trulli houses, canals, castles, etc.)
+- 📸 **Enhanced Photography**: Generates contextual images with city-specific landmarks and weather conditions
 - 📝 **AI Content**: Generates engaging, personal travel stories using OpenAI
 - 🔄 **WordPress Publishing**: Automatically publishes to WordPress with proper formatting
 
@@ -65,6 +66,7 @@ See [AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md) for complete automation details.
 
 - OpenAI API (for content generation)
 - Google Places API (for finding real places)
+- TripAdvisor Content API (for ratings, reviews, and enhanced location data)
 - **Image Provider** (choose one):
   - Unsplash API (for photo search) OR
   - Freepik API (for AI image generation)
@@ -87,6 +89,20 @@ API_KEY_FREEPIK=your_freepik_api_key
 ```
 
 **Unsplash** searches for existing photos, while **Freepik** generates custom AI images based on text prompts. Freepik often provides more relevant and unique images for your specific travel content.
+
+## Enhanced Image Generation
+
+The system now generates more contextual and realistic images by incorporating:
+
+- **Yesterday's Weather Context**: Uses locally stored weather data from the previous day to generate weather-appropriate images (e.g., sunny piazzas, rainy cobblestone streets)
+- **City Specialties**: Automatically recognizes unique architectural and cultural features of each city:
+  - Trulli houses in Alberobello, Italy
+  - Canals and gondolas in Venice, Italy  
+  - Thermal baths in Budapest, Hungary
+  - Medieval castles in Český Krumlov, Czech Republic
+  - And many more...
+- **TripAdvisor Integration**: Enhances city data with real tourist information, ratings, and popular attractions
+- **Local Weather Storage**: Stores today's weather data locally to use as "yesterday's weather" tomorrow, ensuring reliable weather context without depending on historical weather APIs
 
 ## Network Connectivity
 

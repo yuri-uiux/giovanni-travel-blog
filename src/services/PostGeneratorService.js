@@ -260,6 +260,9 @@ class PostGeneratorService {
       // Get weather
       const weather = await WeatherService.getWeatherByCity(location.name, location.country);
       
+      // Get yesterday's weather for image generation
+      const yesterdayWeather = await WeatherService.getYesterdayWeatherByCity(location.name, location.country);
+      
       // Get accommodation (if first day)
       const accommodation = location.current_day <= 1 
         ? await this.getAccommodation(location.id)
@@ -290,10 +293,11 @@ class PostGeneratorService {
       const imageService = new ImageService();
       
       // Load images using the unified image service
-      // 1. Location image
+      // 1. Location image (with yesterday's weather context)
       const locationImage = await imageService.getLocationImage(
         location,
-        `location_${location.id}_${Date.now()}.jpg` 
+        `location_${location.id}_${Date.now()}.jpg`,
+        yesterdayWeather
       );
       
       // 2. Accommodation image (if first day)
@@ -324,6 +328,7 @@ class PostGeneratorService {
       return {
         location,
         weather,
+        yesterdayWeather,
         accommodation,
         restaurant,
         attraction,

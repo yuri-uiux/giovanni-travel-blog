@@ -27,33 +27,35 @@ class ImageService {
   }
 
   /**
-   * Get location image with automatic fallback
+   * Get location image with weather context
+   * @param {Object} location - Location object with name, country, etc.
+   * @param {string} filename - Desired filename for the image
+   * @param {Object} yesterdayWeather - Yesterday's weather data (optional)
+   * @returns {Promise<Object>} Image information with path and metadata
    */
-  async getLocationImage(location, filename) {
+  async getLocationImage(location, filename, yesterdayWeather = null) {
     try {
-      console.log(`Getting location image using ${this.imageProvider} for ${location.name}, ${location.country}`);
-      
-      const result = await this.imageService.getLocationImage(location, filename);
-      
-      if (result && result.path) {
-        return result;
+      if (this.imageProvider === 'freepik') {
+        return await this.imageService.getLocationImage(location, filename, yesterdayWeather);
+      } else {
+        // For Unsplash, we don't use weather data in search
+        return await this.imageService.getLocationImage(location, filename);
       }
-      
-      // If primary service fails, try fallback
-      console.log(`Primary service failed, trying fallback service`);
-      return await this.fallbackService.getLocationImage(location, filename);
-      
     } catch (error) {
-      console.error(`Error in getLocationImage: ${error.message}`);
+      console.error(`Error getting location image: ${error.message}`);
       
       // Try fallback service
       try {
-        console.log(`Attempting fallback service for location image`);
-        return await this.fallbackService.getLocationImage(location, filename);
+        if (this.imageProvider === 'freepik') {
+          // Fallback to Unsplash (no weather support)
+          return await this.fallbackService.getLocationImage(location, filename);
+        } else {
+          // Fallback to Freepik with weather
+          return await this.fallbackService.getLocationImage(location, filename, yesterdayWeather);
+        }
       } catch (fallbackError) {
-        console.error(`Fallback also failed: ${fallbackError.message}`);
-        // Create placeholder as last resort
-        return this.imageService.createPlaceholderImage(filename, 'location');
+        console.error(`Fallback getLocationImage also failed: ${fallbackError.message}`);
+        return this.createPlaceholderImage(filename, 'location');
       }
     }
   }

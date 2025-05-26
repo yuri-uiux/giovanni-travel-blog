@@ -184,6 +184,24 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create daily_weather table for storing weather data locally
+CREATE TABLE IF NOT EXISTS daily_weather (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  city TEXT NOT NULL,
+  country TEXT NOT NULL,
+  date TEXT NOT NULL,
+  temperature INTEGER NOT NULL,
+  feels_like INTEGER NOT NULL,
+  description TEXT NOT NULL,
+  icon TEXT NOT NULL,
+  humidity INTEGER NOT NULL,
+  wind_speed REAL NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create unique index for daily weather (one record per city/country/date)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_weather_location_date ON daily_weather(city, country, date);
+
 -- Insert initial settings
 INSERT OR IGNORE INTO settings (key, value, description)
 VALUES

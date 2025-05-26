@@ -1,6 +1,6 @@
 {
   "name": "giovanni-travel-blog",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Automatic travel blog generator for Giovanni's journey through Eastern and Southern Europe",
   "main": "app.js",
   "scripts": {
