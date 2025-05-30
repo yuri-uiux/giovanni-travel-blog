@@ -2,6 +2,36 @@
 
 All notable changes to Giovanni's Travel Blog will be documented in this file.
 
+## [1.2.1] - 2025-05-28
+
+### Enhanced
+- **Conversational Writing Style**: Completely redesigned prompts for more personal, engaging blog posts
+  - Added detailed tone & voice guidelines for casual, friendly writing
+  - Included humor, personality, and honest opinions in content generation
+  - Enhanced local expertise positioning and insider knowledge sharing
+  - Improved structure with natural flow and parenthetical asides
+  - Removed repetitive greetings ("Hey there, friends!") - now only one greeting at the start
+  - Added logical paragraph structure for restaurant and attraction sections (2 paragraphs each)
+  - Moderated enthusiasm level - using "good/nice/interesting" instead of excessive superlatives
+- **Website Integration**: Added restaurant and attraction website URLs to prompts for better context
+- **Comprehensive Prompt Logging**: Full logging system for all OpenAI and Freepik prompts
+  - View recent prompts with `npm run view-logs recent`
+  - Analyze statistics with `npm run view-logs stats`
+  - Search prompts with `npm run view-logs search`
+  - Clean old logs with `npm run view-logs clean`
+
+### Added
+- **Enhanced Prompt Context**: All prompts now include location and day information for better logging
+
+### Technical
+- Updated all blog section prompts (introduction, accommodation, food, attraction, closing)
+- Improved prompt length guidelines (200-300 words for detailed sections)
+- Added website URL integration in food and attraction prompts
+- Enhanced error handling and logging throughout
+- Added explicit instructions to avoid repetitive greetings in non-introduction sections
+- Improved paragraph flow and logical content organization
+- Added automatic paragraph splitting for restaurant and attraction sections in WordPress output
+
 ## [1.2.0] - 2025-05-28
 
 ### Enhanced Image Generation

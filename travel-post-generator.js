@@ -103,7 +103,11 @@ Keep the total length between 400-500 words and use a warm, personal tone.
     console.log('Generating travel post content...');
     const content = await OpenAIService.generateText(prompt, {
       temperature: 0.7,
-      maxTokens: 1000
+      maxTokens: 1000,
+      type: 'travel_post',
+      location: `${previousLocation.name} to ${currentLocation.name}`,
+      day: 'travel',
+      section: 'journey'
     });
 
     // Create title and excerpt

@@ -1,14 +1,15 @@
 {
   "name": "giovanni-travel-blog",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Automatic travel blog generator for Giovanni's journey through Eastern and Southern Europe",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "test": "node travel-post-generator.js",
     "init-journey": "node src/utils/initJourneyDynamic.js",
-    "move-next": "node move_to_next_location.js",
-    "travel-post": "node travel-post-generator.js"
+    "generate-post": "node travel-post-generator.js",
+    "move-location": "node move_to_next_location.js",
+    "view-logs": "node view_prompt_logs.js"
   },
   "keywords": [
     "travel",

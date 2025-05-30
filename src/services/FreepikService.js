@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3').verbose();
 const CitySpecialtyService = require('./CitySpecialtyService');
+const PromptLogger = require('../utils/PromptLogger');
 require('dotenv').config();
 
 class FreepikService {
@@ -183,7 +184,7 @@ class FreepikService {
   }
 
   // Generate image using Freepik API
-  async generateImage(prompt, promptType = 'general') {
+  async generateImage(prompt, promptType = 'general', context = {}) {
     try {
       await this.checkRateLimit();
       
@@ -199,6 +200,20 @@ class FreepikService {
       }
       
       console.log(`Generating image with Freepik for: "${prompt}"`);
+      
+      // Log the prompt with context
+      PromptLogger.logFreepikPrompt(prompt, {
+        type: 'image_generation',
+        engine: this.defaultEngine,
+        size: this.defaultImageSize,
+        resolution: this.defaultResolution,
+        style: this.defaultStyle || 'none',
+        realism: this.defaultRealism || 'default',
+        creativeDetailing: this.defaultCreativeDetailing || 'default',
+        imageType: promptType,
+        location: context.location || 'unknown',
+        day: context.day || 'unknown'
+      });
       
       const requestBody = {
         prompt: prompt,
@@ -393,7 +408,10 @@ class FreepikService {
       }
       
       const prompt = await this.generateLocationPrompt(location.name, location.country, yesterdayWeather);
-      const imageInfo = await this.generateImage(prompt, 'location');
+      const imageInfo = await this.generateImage(prompt, 'location', {
+        location: `${location.name}, ${location.country}`,
+        day: location.current_day || 'unknown'
+      });
       
       if (imageInfo && imageInfo.base64) {
         const result = await this.saveBase64Image(imageInfo.base64, filename);
@@ -423,7 +441,10 @@ class FreepikService {
       }
       
       const prompt = this.generateAccommodationPrompt(country);
-      const imageInfo = await this.generateImage(prompt, 'accommodation');
+      const imageInfo = await this.generateImage(prompt, 'accommodation', {
+        location: `${accommodation.name || 'accommodation'}, ${country}`,
+        day: 'accommodation'
+      });
       
       if (imageInfo && imageInfo.base64) {
         const result = await this.saveBase64Image(imageInfo.base64, filename);
@@ -454,7 +475,10 @@ class FreepikService {
       // Extract cuisine type from restaurant data or use location-based cuisine
       const cuisine = restaurant.cuisine || this.getLocalCuisine(location.country);
       const prompt = this.generateFoodPrompt(cuisine, location.country);
-      const imageInfo = await this.generateImage(prompt, 'food');
+      const imageInfo = await this.generateImage(prompt, 'food', {
+        location: `${restaurant.name}, ${location.name}, ${location.country}`,
+        day: location.current_day || 'unknown'
+      });
       
       if (imageInfo && imageInfo.base64) {
         const result = await this.saveBase64Image(imageInfo.base64, filename);
@@ -483,7 +507,10 @@ class FreepikService {
       }
       
       const prompt = `${attraction.name} in ${location.name}, ${location.country}, historic landmark, ${this.currentSeason} atmosphere, professional travel photography, architectural details`;
-      const imageInfo = await this.generateImage(prompt, 'attraction');
+      const imageInfo = await this.generateImage(prompt, 'attraction', {
+        location: `${attraction.name}, ${location.name}, ${location.country}`,
+        day: location.current_day || 'unknown'
+      });
       
       if (imageInfo && imageInfo.base64) {
         const result = await this.saveBase64Image(imageInfo.base64, filename);
